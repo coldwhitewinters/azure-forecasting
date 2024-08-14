@@ -1,13 +1,11 @@
 import polars as pl
-from pathlib import Path
-from datetime import datetime
+import os
 
-def prepare_m5_data(data_dir):
-    data_dir = Path(data_dir)
-    
-    sales_df = pl.read_csv(data_dir / "sales_train_evaluation.csv")
-    prices_df = pl.read_csv(data_dir / "sell_prices.csv")
-    calendar_df = pl.read_csv(data_dir / "calendar.csv")
+
+def prepare_m5_data(input_dir, output_dir, max_series=None):
+    sales_df = pl.read_csv(os.path.join(input_dir, "sales_train_evaluation.csv"))
+    prices_df = pl.read_csv(os.path.join(input_dir, "sell_prices.csv"))
+    calendar_df = pl.read_csv(os.path.join(input_dir, "calendar.csv"))
 
     hierarchy_df = (
         sales_df
@@ -16,6 +14,7 @@ def prepare_m5_data(data_dir):
         .with_columns(
             pl.col("unique_id").str.replace("_evaluation", "")
         )
+        .sort(by="unique_id")
     )
 
     calendar_df = (
@@ -39,14 +38,22 @@ def prepare_m5_data(data_dir):
         .with_columns(
             pl.col("i").str.replace("d_", "").cast(pl.datatypes.Int64)
         )
-        .join(hierarchy_df.select("unique_id", "item_id", "store_id"), on="unique_id", how="left")
+        .join(
+            hierarchy_df.select("unique_id", "item_id", "store_id"),
+            on="unique_id",
+            how="left"
+        )
         .join(calendar_df, on="i", how="left")
         .join(prices_df, on=["item_id", "store_id", "wm_yr_wk"], how="left")
         .drop("item_id", "store_id")
+        .sort(by=["unique_id", "date"])
     )
 
-    processed_data_dir = data_dir / "processed"
-    processed_data_dir.mkdir(exist_ok=True)
+    if max_series:
+        selected_series = hierarchy_df.select("unique_id").unique().slice(0, max_series)
+        hierarchy_df = hierarchy_df.filter(pl.col("unique_id").is_in(selected_series))
+        sales_df = sales_df.filter(pl.col("unique_id").is_in(selected_series))
 
-    sales_df.write_parquet(processed_data_dir / "sales_df.parquet")
-    hierarchy_df.write_parquet(processed_data_dir / "hierarchy_df.parquet")
+    os.makedirs(output_dir, exist_ok=True)
+    sales_df.write_parquet(os.path.join(output_dir, "sales_df.parquet"))
+    hierarchy_df.write_parquet(os.path.join(output_dir, "hierarchy_df.parquet"))
