@@ -1,0 +1,41 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: forecast
+display_name: Forecast
+version: 1
+type: command
+
+inputs:
+  timeseries: 
+    type: uri_folder 
+  horizon:
+    type: integer
+  freq:
+    type: string
+  season_length:
+    type: integer
+  model:
+    type: string
+  n_partitions:
+    type: integer
+outputs:
+  forecasts:
+    type: uri_folder
+
+distribution:
+  type: mpi
+  process_count_per_instance: 2
+resources:
+  instance_count: 64
+
+code: ../src
+environment: azureml:forecast-env@latest
+
+command: >-
+  python -m forecast
+  --input ${{inputs.timeseries}} 
+  --output ${{outputs.forecasts}}
+  --horizon ${{inputs.horizon}} 
+  --freq ${{inputs.freq}}
+  --season-length ${{inputs.season_length}}
+  --model ${{inputs.model}} 
+  --n-partitions ${{inputs.n_partitions}}

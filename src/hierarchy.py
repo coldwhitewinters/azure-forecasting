@@ -1,7 +1,12 @@
-import polars as pl
-from itertools import product, chain
 import os
 import json
+import argparse
+import logging
+
+import polars as pl
+from itertools import product, chain
+
+logger = logging.getLogger(__name__)
 
 
 def get_hierarchy_groups(hierarchy_spec):
@@ -53,6 +58,8 @@ def build_hts(bts_df, ids_df, hierarchy_spec):
 
 
 def build_hierarchy(input_dir, output_dir):
+    logger.info("Loading preprocessed data")
+
     data_df = pl.read_parquet(os.path.join(input_dir, "data.parquet"))
     ids_df = pl.read_parquet(os.path.join(input_dir, "data_ids.parquet"))
     with open(os.path.join(input_dir, "hierarchy_spec.json")) as fp:
@@ -64,11 +71,29 @@ def build_hierarchy(input_dir, output_dir):
         .rename({"date": "ds", "dollar_sales": "y"})
     )
 
+    logger.info("Building time series hierarchy")
+
     hts_df = build_hts(bts_df, ids_df, hierarchy_spec)
 
     id_cols = ids_df.columns
     hts_ids = hts_df.select(*id_cols).unique()
     hts_df = hts_df.select(["unique_id", "ds", "y"])
 
+    logger.info("Saving time series hieararchy")
+
     hts_ids.write_parquet(os.path.join(output_dir, "hts_ids.parquet"))
     hts_df.write_parquet(os.path.join(output_dir, "hts.parquet"))
+
+
+if __name__ == "__main__":
+    logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", type=str, help="path to input data")
+    parser.add_argument("--output", type=str, help="path to output data")
+    args = parser.parse_args()
+
+    build_hierarchy(
+        input_dir=args.input,
+        output_dir=args.output,
+    )

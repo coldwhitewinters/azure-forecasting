@@ -1,0 +1,46 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: Forecasting pipeline
+experiment_name: forecasting-pipeline
+description: Forecasting pipeline for the M5 data
+
+settings:
+  default_datastore: azureml:workspaceblobstore
+  default_compute: azureml:forecast-single-node
+  continue_on_step_failure: false
+
+outputs:
+  forecasts:
+    type: uri_folder
+
+jobs:
+  preprocessing_job:
+    type: command
+    component: ./preprocessing.yml
+    inputs:
+      raw_data: azureml:m5-data:1
+      max_series: 1000
+    outputs:
+      processsed_data:
+
+  build_hierarchy_job:
+    type: command
+    component: ./hierarchy.yml
+    inputs:
+      processed_data: ${{parent.jobs.preprocessing_job.outputs.processed_data}}
+    outputs:
+      hierarchical_timeseries:
+
+  forecast_job:
+    type: command
+    component: ./forecast.yml
+    compute: forecast-cluster
+    inputs:
+      timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hierarchical_timeseries}}
+      horizon: 28
+      freq: D
+      season_length: 7
+      model: AutoETS
+      n_partitions: 256
+    outputs:
+      forecasts: ${{parent.outputs.forecasts}}

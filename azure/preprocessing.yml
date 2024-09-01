@@ -1,0 +1,24 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: prepare_data
+display_name: Prepare data
+version: 1
+type: command
+
+inputs:
+  raw_data: 
+    type: uri_folder
+  max_series:
+    type: integer
+    optional: true
+outputs:
+  processed_data:
+    type: uri_folder
+
+code: ../src
+environment: azureml:forecast-env@latest
+
+command: >-
+  python -m preprocessing
+  --input ${{inputs.raw_data}} 
+  --output ${{outputs.processed_data}}
+  $[[--max-series ${{inputs.max_series}}]]
