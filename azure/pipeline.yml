@@ -9,17 +9,13 @@ settings:
   default_compute: azureml:forecast-single-node
   continue_on_step_failure: false
 
-outputs:
-  forecasts:
-    type: uri_folder
-
 jobs:
   preprocessing_job:
     type: command
     component: ./preprocessing.yml
     inputs:
       raw_data: azureml:m5-data:1
-      max_series: 1000
+      #max_series: 20000
     outputs:
       processsed_data:
 
@@ -41,6 +37,6 @@ jobs:
       freq: D
       season_length: 7
       model: AutoETS
-      n_partitions: 256
+      n_partitions: 128
     outputs:
-      forecasts: ${{parent.outputs.forecasts}}
+      forecasts:

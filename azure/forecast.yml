@@ -23,9 +23,9 @@ outputs:
 
 distribution:
   type: mpi
-  process_count_per_instance: 2
+  process_count_per_instance: 6
 resources:
-  instance_count: 64
+  instance_count: 15
 
 code: ../src
 environment: azureml:forecast-env@latest

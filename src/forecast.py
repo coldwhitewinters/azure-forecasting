@@ -47,10 +47,23 @@ def forecast(
     model_cls = getattr(statsforecast.models, model)
     meta = hts_ddf.head(0).rename(columns={"y": "y_hat"})
     meta["ds"] = pd.to_datetime(meta["ds"])
+    # fcst_df = (
+    #     hts_ddf
+    #     .repartition(npartitions=n_partitions)
+    #     .map_partitions(
+    #         forecast_func,
+    #         horizon=horizon,
+    #         freq=freq,
+    #         model=model_cls(season_length=season_length),
+    #         meta=meta
+    #     )
+    #     .compute()
+    # )
     fcst_df = (
         hts_ddf
         .repartition(npartitions=n_partitions)
-        .map_partitions(
+        .groupby("unique_id")
+        .apply(
             forecast_func,
             horizon=horizon,
             freq=freq,
@@ -59,6 +72,7 @@ def forecast(
         )
         .compute()
     )
+    fcst_df = fcst_df.reset_index(drop=True)
     fcst_df = pl.DataFrame(fcst_df)
 
     logger.info("Finished forecast")
