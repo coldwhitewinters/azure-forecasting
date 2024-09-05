@@ -135,7 +135,7 @@ def build_hierarchy(input_dir, output_dir):
     hts_df, S_arr = build_hts(bts_df, ids_df, hierarchy_spec)
 
     id_cols = ids_df.columns
-    hts_ids = hts_df.select(*id_cols).unique()
+    hts_ids = hts_df.select(id_cols).unique(maintain_order=True)
     hts_df = hts_df.select(["unique_id", "ds", "y"])
 
     logger.info("Saving time series hieararchy")
