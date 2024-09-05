@@ -15,7 +15,7 @@ jobs:
     component: ./preprocessing.yml
     inputs:
       raw_data: azureml:m5-data:1
-      #max_series: 20000
+      #max_series: 5000
     outputs:
       processsed_data:
 
@@ -30,13 +30,13 @@ jobs:
   forecast_job:
     type: command
     component: ./forecast.yml
-    compute: forecast-cluster
+    compute: forecast-cluster-2
     inputs:
       timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hierarchical_timeseries}}
       horizon: 28
       freq: D
       season_length: 7
       model: AutoETS
-      n_partitions: 128
+      n_partitions: 256
     outputs:
       forecasts:
