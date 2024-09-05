@@ -1,12 +1,16 @@
-import argparse
 import os
+import argparse
+
+from dask.distributed import Client
 
 from src.preprocessing import prepare_m5_data
-from src.hierarchical import build_hierarchy
+from hierarchy import build_hierarchy
 from src.forecast import forecast
 
 
 def main():
+    client = Client(n_workers=16, threads_per_worker=1)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, default="data/m5", help="path to input data")
     parser.add_argument("--output", type=str, default="output/", help="path to output data")
@@ -32,7 +36,7 @@ def main():
     )
 
     forecast(
-        input_dir=processed_data_dir, 
+        input_dir=processed_data_dir,
         output_dir=args.output
     )
 
