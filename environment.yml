@@ -24,6 +24,7 @@ dependencies:
     - jupyterlab
     - numpy
     - scipy
+    - cupy-cuda11x
     - pandas
     - polars
     - matplotlib
