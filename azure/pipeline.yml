@@ -15,7 +15,7 @@ jobs:
     component: ./preprocessing.yml
     inputs:
       raw_data: azureml:m5-data:1
-      #max_series: 5000
+      # max_series: 5000
     outputs:
       processsed_data:
 
@@ -27,12 +27,22 @@ jobs:
     outputs:
       hierarchical_timeseries:
 
+  split_job:
+    type: command
+    component: ./split.yml
+    inputs:
+      timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hierarchical_timeseries}}
+      freq: D
+      lag: 28
+    outputs:
+      train_test_data:
+
   forecast_job:
     type: command
     component: ./forecast.yml
     compute: forecast-cluster-2
     inputs:
-      timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hierarchical_timeseries}}
+      timeseries: ${{parent.jobs.split_job.outputs.train_test_data}}
       horizon: 28
       freq: D
       season_length: 7

@@ -1,0 +1,26 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: train_test_split
+display_name: Train test split
+version: 1
+type: command
+
+inputs:
+  timeseries: 
+    type: uri_folder
+  freq:
+    type: string
+  lag:
+    type: integer
+outputs:
+  train_test_data:
+    type: uri_folder
+
+code: ../src
+environment: azureml:forecast-env@latest
+
+command: >-
+  python -m split
+  --input ${{inputs.timeseries}} 
+  --output ${{outputs.train_test_data}}
+  --freq ${{inputs.freq}}
+  --lag ${{inputs.lag}}
