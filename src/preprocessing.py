@@ -87,14 +87,10 @@ if __name__ == "__main__":
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="path to input data")
-    parser.add_argument("--output", type=str, help="path to output data")
-    parser.add_argument(
-        "--max-series",
-        type=int,
-        default=None,
-        help="maximum number of timeseries to process"
-    )
+    parser.add_argument("--input", type=str, help="Path to input data")
+    parser.add_argument("--output", type=str, help="Path to output data")
+    parser.add_argument("--max-series", type=int, default=None,
+                        help="Maximum number of timeseries to process")
     args = parser.parse_args()
 
     prepare_m5_data(

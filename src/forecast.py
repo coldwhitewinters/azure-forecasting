@@ -27,8 +27,7 @@ def forecast(
     logger.info(f"We have {n_cpus} cores available")
 
     logger.info("Loading timeseries hierarchy")
-    hts_ddf = dd.read_parquet(os.path.join(input_dir, "hts.parquet"))
-    # ids_df = pl.read_parquet(os.path.join(input_dir, "hts_ids.parquet"))
+    hts_ddf = dd.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
 
     logger.info("Starting forecast")
 
@@ -77,16 +76,16 @@ if __name__ == "__main__":
     client = Client()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="path to input data")
-    parser.add_argument("--output", type=str, help="path to output data")
-    parser.add_argument("--horizon", type=int, help="forecast horizon")
-    parser.add_argument("--freq", type=str, help="frequency of the data")
-    parser.add_argument("--season-length", type=int, help="seasonal length of the data")
-    parser.add_argument("--model", type=str, help="model to use for the forecasts")
+    parser.add_argument("--input", type=str, help="Path to input data")
+    parser.add_argument("--output", type=str, help="Path to output data")
+    parser.add_argument("--horizon", type=int, help="Forecast horizon")
+    parser.add_argument("--freq", type=str, help="Frequency of the data")
+    parser.add_argument("--season-length", type=int, help="Seasonal length of the data")
+    parser.add_argument("--model", type=str, help="Model to use for the forecasts")
     parser.add_argument(
         "--n-partitions",
         type=int,
-        help="number of partitions to use for distributing input dataframe"
+        help="Number of partitions to use for distributing input dataframe"
     )
     args = parser.parse_args()
 
