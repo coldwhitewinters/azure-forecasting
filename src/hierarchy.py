@@ -5,6 +5,7 @@ import logging
 
 import numpy as np
 import polars as pl
+import scipy.sparse as sp_sparse
 from itertools import product, chain
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def build_group_indexes(ids_df, group_key):
     return group_indexes_df
 
 
-def build_S_arr(hts_indexes):
+def build_S_arr(hts_indexes, sparse=True):
     M = len(hts_indexes)
     N = len(hts_indexes["index"][0])
     S_arr = np.zeros((M, N))
@@ -68,6 +69,9 @@ def build_S_arr(hts_indexes):
     for i, row in enumerate(index_rows):
         indexes = row[0]
         S_arr[i, indexes] = 1
+
+    if sparse:
+        S_arr = sp_sparse.csr_array(S_arr)
 
     return S_arr
 
@@ -138,19 +142,25 @@ def build_hierarchy(input_dir, output_dir):
     hts_ids = hts_df.select(id_cols).unique(maintain_order=True)
     hts_df = hts_df.select(["unique_id", "ds", "y"])
 
-    logger.info("Saving time series hieararchy")
+    logger.info("Saving time series hierarchy")
 
     hts_ids.write_parquet(os.path.join(output_dir, "hts_ids.parquet"))
     hts_df.write_parquet(os.path.join(output_dir, "hts.parquet"))
-    np.save(os.path.join(output_dir, "S_arr.npy"), S_arr)
+
+    if isinstance(S_arr, np.ndarray):
+        np.save(os.path.join(output_dir, "S_arr.npy"), S_arr)
+    elif isinstance(S_arr, sp_sparse.csr_array) or isinstance(S_arr, sp_sparse.csc_array):
+        sp_sparse.save_npz(os.path.join(output_dir, "S_arr.npy"), S_arr)
+    else:
+        raise ValueError("S_arr must be a numpy array or a sparse matrix")
 
 
 if __name__ == "__main__":
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="path to input data")
-    parser.add_argument("--output", type=str, help="path to output data")
+    parser.add_argument("--input", type=str, help="Path to input data")
+    parser.add_argument("--output", type=str, help="Path to output data")
     args = parser.parse_args()
 
     build_hierarchy(
