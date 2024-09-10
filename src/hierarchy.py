@@ -150,7 +150,7 @@ def build_hierarchy(input_dir, output_dir):
     if isinstance(S_arr, np.ndarray):
         np.save(os.path.join(output_dir, "S_arr.npy"), S_arr)
     elif isinstance(S_arr, sp_sparse.csr_array) or isinstance(S_arr, sp_sparse.csc_array):
-        sp_sparse.save_npz(os.path.join(output_dir, "S_arr.npy"), S_arr)
+        sp_sparse.save_npz(os.path.join(output_dir, "S_arr.npz"), S_arr)
     else:
         raise ValueError("S_arr must be a numpy array or a sparse matrix")
 
