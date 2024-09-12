@@ -19,7 +19,7 @@ def train_test_split(ts_df, freq, lag):
 
 
 def prepare_eval_data(input_dir, output_dir, freq, lag):
-    logging.info("Splitting data into train and test sets")
+    logger.info("Splitting data into train and test sets")
 
     hts_df = pl.read_parquet(os.path.join(input_dir, "hts.parquet"))
 
@@ -33,12 +33,12 @@ def prepare_eval_data(input_dir, output_dir, freq, lag):
         hts_train_df = hts_df
         hts_test_df = pl.DataFrame()
 
-    logging.info("Saving train and test sets")
+    logger.info("Saving train and test sets")
     hts_train_df.write_parquet(os.path.join(output_dir, "hts_train.parquet"))
     hts_test_df.write_parquet(os.path.join(output_dir, "hts_test.parquet"))
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -57,3 +57,7 @@ if __name__ == "__main__":
         freq=args.freq,
         lag=args.lag
     )
+
+
+if __name__ == "__main__":
+    main()

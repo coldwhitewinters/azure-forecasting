@@ -27,7 +27,9 @@ def forecast(
     logger.info(f"We have {n_cpus} cores available")
 
     logger.info("Loading timeseries hierarchy")
-    hts_ddf = dd.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
+
+    hts_df = pl.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
+    hts_dd = dd.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
 
     logger.info("Starting forecast")
 
@@ -44,10 +46,10 @@ def forecast(
         return fcst
 
     model_cls = getattr(statsforecast.models, model)
-    meta = hts_ddf.head(0).rename(columns={"y": "y_hat"})
+    meta = hts_dd.head(0).rename(columns={"y": "y_hat"})
     meta["ds"] = pd.to_datetime(meta["ds"])
     fcst_df = (
-        hts_ddf
+        hts_dd
         .repartition(npartitions=n_partitions)
         .groupby("unique_id")
         .apply(
@@ -60,7 +62,7 @@ def forecast(
         .compute()
     )
     fcst_df = fcst_df.reset_index(drop=True)
-    fcst_df = pl.DataFrame(fcst_df)
+    fcst_df = pl.DataFrame(fcst_df).with_columns(pl.col("ds").cast(hts_df["ds"].dtype))
 
     logger.info("Finished forecast")
 
@@ -69,11 +71,11 @@ def forecast(
     fcst_df.write_parquet(os.path.join(output_dir, "fcst.parquet"))
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     dask_mpi.initialize()
-    client = Client()
+    client = Client()  # noqa F841
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, help="Path to input data")
@@ -98,3 +100,7 @@ if __name__ == "__main__":
         model=args.model,
         n_partitions=args.n_partitions
     )
+
+
+if __name__ == "__main__":
+    main()

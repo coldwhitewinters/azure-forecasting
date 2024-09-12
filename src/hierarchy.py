@@ -155,7 +155,7 @@ def build_hierarchy(input_dir, output_dir):
         raise ValueError("S_arr must be a numpy array or a sparse matrix")
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -163,7 +163,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, help="Path to output data")
     args = parser.parse_args()
 
-    build_hierarchy(
-        input_dir=args.input,
-        output_dir=args.output,
-    )
+    build_hierarchy(args.input, args.output)
+
+
+if __name__ == "__main__":
+    main()
