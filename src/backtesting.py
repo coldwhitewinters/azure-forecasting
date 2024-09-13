@@ -18,24 +18,24 @@ def train_test_split(ts_df, freq, lag):
     return ts_train_df, ts_test_df
 
 
-def prepare_eval_data(input_dir, output_dir, freq, lag):
+def prepare_eval_data(input_dir, train_fp, test_fp, freq, lag):
     logger.info("Splitting data into train and test sets")
 
-    hts_df = pl.read_parquet(os.path.join(input_dir, "hts.parquet"))
+    ts_df = pl.read_parquet(os.path.join(input_dir, "hts.parquet"))
 
     if lag > 0:
-        hts_train_df, hts_test_df = train_test_split(
-            ts_df=hts_df,
+        train_df, test_df = train_test_split(
+            ts_df=ts_df,
             freq=freq,
             lag=lag
         )
     else:
-        hts_train_df = hts_df
-        hts_test_df = pl.DataFrame()
+        train_df = ts_df
+        test_df = pl.DataFrame()
 
     logger.info("Saving train and test sets")
-    hts_train_df.write_parquet(os.path.join(output_dir, "hts_train.parquet"))
-    hts_test_df.write_parquet(os.path.join(output_dir, "hts_test.parquet"))
+    train_df.write_parquet(train_fp)
+    test_df.write_parquet(test_fp)
 
 
 def main():
@@ -43,7 +43,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, help="Path to input data")
-    parser.add_argument("--output", type=str, help="Path to output data")
+    parser.add_argument("--train", type=str, help="Path to output train data")
+    parser.add_argument("--test", type=str, help="Path to output test data")
     parser.add_argument("--freq", type=str, help="Frequency of the data")
     parser.add_argument(
         "--lag", type=int,
@@ -53,7 +54,8 @@ def main():
 
     prepare_eval_data(
         input_dir=args.input,
-        output_dir=args.output,
+        train_fp=args.train,
+        test_fp=args.test,
         freq=args.freq,
         lag=args.lag
     )

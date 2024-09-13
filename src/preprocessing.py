@@ -83,7 +83,7 @@ def prepare_m5_data(input_dir, output_dir, max_series=None):
         json.dump(hierarchy_spec, fp)
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -98,3 +98,7 @@ if __name__ == "__main__":
         output_dir=args.output,
         max_series=args.max_series
     )
+
+
+if __name__ == "__main__":
+    main()

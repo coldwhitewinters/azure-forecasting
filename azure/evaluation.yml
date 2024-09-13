@@ -1,0 +1,26 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: evaluate_forecasts
+display_name: Evaluate forecasts
+version: 1
+type: command
+
+inputs:
+  fcst: 
+    type: uri_folder
+  test:
+    type: uri_file
+  train: 
+    type: uri_file
+outputs:
+  metrics:
+    type: uri_folder
+
+code: ../src
+environment: azureml:forecast-env@latest
+
+command: >-
+  python -m evaluation
+  --fcst ${{inputs.fcst}}
+  --test ${{inputs.test}}
+  --train ${{inputs.train}}
+  --output ${{outputs.metrics}}

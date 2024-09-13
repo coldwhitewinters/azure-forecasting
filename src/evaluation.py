@@ -56,19 +56,19 @@ def calculate_metrics(fcst_df, test_df, train_df, eps=0):
     return metrics_df
 
 
-def evaluate_forecasts(input_dir, output_dir):
+def evaluate_forecasts(fcst_data, test_data, train_data, output_dir):
     logger.info("Loading forecast and test data")
 
-    fcst_df = pl.read_parquet(os.path.join(input_dir, "fcst.parquet"))
-    hts_train_df = pl.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
-    hts_test_df = pl.read_parquet(os.path.join(input_dir, "hts_test.parquet"))
+    fcst_df = pl.read_parquet(fcst_data)
+    test_df = pl.read_parquet(test_data)
+    train_df = pl.read_parquet(train_data)
 
     logger.info("Calculating metrics")
 
     metrics_df = calculate_metrics(
         fcst_df=fcst_df,
-        train_df=hts_train_df,
-        test_df=hts_test_df
+        train_df=train_df,
+        test_df=test_df
     )
 
     overall_metrics = (
@@ -90,11 +90,18 @@ def main():
     logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="Path to input data")
+    parser.add_argument("--fcst", type=str, help="Path to forecast data")
+    parser.add_argument("--test", type=str, help="Path to test data")
+    parser.add_argument("--train", type=str, help="Path to train data")
     parser.add_argument("--output", type=str, help="Path to output data")
     args = parser.parse_args()
 
-    evaluate_forecasts(input_dir=args.input, output_dir=args.output)
+    evaluate_forecasts(
+        fcst_data=args.fcst,
+        test_data=args.test,
+        train_data=args.train,
+        output_dir=args.output
+    )
 
 
 if __name__ == "__main__":

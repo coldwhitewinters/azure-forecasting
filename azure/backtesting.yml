@@ -12,15 +12,18 @@ inputs:
   lag:
     type: integer
 outputs:
-  train_test_data:
-    type: uri_folder
+  train_data:
+    type: uri_file
+  test_data:
+    type: uri_file
 
 code: ../src
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m split
-  --input ${{inputs.timeseries}} 
-  --output ${{outputs.train_test_data}}
+  python -m backtesting
+  --input ${{inputs.timeseries}}
+  --train ${{outputs.train_data}}
+  --test ${{outputs.test_data}}
   --freq ${{inputs.freq}}
   --lag ${{inputs.lag}}

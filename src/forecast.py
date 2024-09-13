@@ -15,7 +15,7 @@ os.environ["NIXTLA_ID_AS_COL"] = "1"
 
 
 def forecast(
-    input_dir,
+    ts_fp,
     output_dir,
     horizon=1,
     freq="M",
@@ -28,8 +28,8 @@ def forecast(
 
     logger.info("Loading timeseries hierarchy")
 
-    hts_df = pl.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
-    hts_dd = dd.read_parquet(os.path.join(input_dir, "hts_train.parquet"))
+    hts_df = pl.read_parquet(ts_fp)
+    hts_dd = dd.read_parquet(ts_fp)
 
     logger.info("Starting forecast")
 
@@ -92,7 +92,7 @@ def main():
     args = parser.parse_args()
 
     forecast(
-        input_dir=args.input,
+        ts_fp=args.input,
         output_dir=args.output,
         horizon=args.horizon,
         freq=args.freq,
