@@ -1,6 +1,7 @@
 import os
 import argparse
 import logging
+from pathlib import Path
 
 import polars as pl
 import pandas as pd
@@ -63,12 +64,37 @@ def forecast(
     )
     fcst_df = fcst_df.reset_index(drop=True)
     fcst_df = pl.DataFrame(fcst_df).with_columns(pl.col("ds").cast(hts_df["ds"].dtype))
+    fcst_df = fcst_df.with_columns(cutoff=fcst_df["ds"].min())
 
     logger.info("Finished forecast")
 
     logger.info("Writing forecast")
     os.makedirs(output_dir, exist_ok=True)
-    fcst_df.write_parquet(os.path.join(output_dir, "fcst.parquet"))
+    lag = ts_fp.stem.split("_")[-1]
+    fcst_df.write_parquet(os.path.join(output_dir, f"fcst_{lag}.parquet"))
+
+
+def forecast_folds(
+    input_dir,
+    output_dir,
+    horizon=1,
+    freq="M",
+    season_length=1,
+    model=statsforecast.models.Naive,
+    n_partitions=1
+):
+    input_dir = Path(input_dir)
+
+    for ts_fp in input_dir.iterdir():
+        forecast(
+            ts_fp=ts_fp,
+            output_dir=output_dir,
+            horizon=horizon,
+            freq=freq,
+            season_length=season_length,
+            model=model,
+            n_partitions=n_partitions
+        )
 
 
 def main():
@@ -91,8 +117,8 @@ def main():
     )
     args = parser.parse_args()
 
-    forecast(
-        ts_fp=args.input,
+    forecast_folds(
+        input_dir=args.input,
         output_dir=args.output,
         horizon=args.horizon,
         freq=args.freq,

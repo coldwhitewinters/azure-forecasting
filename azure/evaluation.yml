@@ -9,8 +9,6 @@ inputs:
     type: uri_folder
   test:
     type: uri_file
-  train: 
-    type: uri_file
 outputs:
   metrics:
     type: uri_folder
@@ -22,5 +20,4 @@ command: >-
   python -m evaluation
   --fcst ${{inputs.fcst}}
   --test ${{inputs.test}}
-  --train ${{inputs.train}}
   --output ${{outputs.metrics}}

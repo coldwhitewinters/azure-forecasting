@@ -7,35 +7,37 @@ import polars as pl
 logger = logging.getLogger(__name__)
 
 
-def train_test_split(ts_df, freq, lag):
+def get_rolling_cv_fold(ts_df, freq, lag):
+    if lag == 0:
+        train_df = ts_df
+        test_df = pl.DataFrame()
+        return train_df, test_df
+
     start_date = ts_df["ds"].min()
     end_date = ts_df["ds"].max()
     dates = pd.date_range(start=start_date, end=end_date, freq=freq)
     # dates = pl.date_range(start=start_date, end=end_date, interval=freq, eager=True)
     cutoff = dates[:-lag].max()
-    ts_train_df = ts_df.filter(ts_df["ds"] <= cutoff)
-    ts_test_df = ts_df.filter(ts_df["ds"] > cutoff)
-    return ts_train_df, ts_test_df
+    train_df = ts_df.filter(ts_df["ds"] <= cutoff)
+    return train_df
 
 
-def prepare_eval_data(input_dir, train_fp, test_fp, freq, lag):
+def prepare_eval_data(input_dir, train_dir, test_fp, freq, lags):
     logger.info("Splitting data into train and test sets")
 
     ts_df = pl.read_parquet(os.path.join(input_dir, "hts.parquet"))
 
-    if lag > 0:
-        train_df, test_df = train_test_split(
+    for lag in lags:
+        train_df = get_rolling_cv_fold(
             ts_df=ts_df,
             freq=freq,
             lag=lag
         )
-    else:
-        train_df = ts_df
-        test_df = pl.DataFrame()
+        logger.info(f"Saving CV fold for lag {lag}")
+        train_df.write_parquet(os.path.join(train_dir, f"lag_{lag}.parquet"))
 
-    logger.info("Saving train and test sets")
-    train_df.write_parquet(train_fp)
-    test_df.write_parquet(test_fp)
+    logger.info("Saving test data")
+    ts_df.write_parquet(test_fp)
 
 
 def main():
@@ -47,17 +49,17 @@ def main():
     parser.add_argument("--test", type=str, help="Path to output test data")
     parser.add_argument("--freq", type=str, help="Frequency of the data")
     parser.add_argument(
-        "--lag", type=int,
+        "--lags", type=str, nargs="+",
         help="Go back in time by this amount and start forecasting from there"
     )
     args = parser.parse_args()
 
     prepare_eval_data(
         input_dir=args.input,
-        train_fp=args.train,
+        train_dir=args.train,
         test_fp=args.test,
         freq=args.freq,
-        lag=args.lag
+        lags=map(int, args.lags)
     )
 
 

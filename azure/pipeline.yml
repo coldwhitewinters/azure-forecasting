@@ -33,7 +33,7 @@ jobs:
     inputs:
       timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hierarchical_timeseries}}
       freq: D
-      lag: 28
+      lags: 28 35
     outputs:
       train_data:
       test_data:
@@ -58,6 +58,5 @@ jobs:
     inputs:
       fcst: ${{parent.jobs.forecast_job.outputs.forecasts}}
       test: ${{parent.jobs.train_test_split_job.outputs.test_data}}
-      train: ${{parent.jobs.train_test_split_job.outputs.train_data}}
     outputs:
       metrics:

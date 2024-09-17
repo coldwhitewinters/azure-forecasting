@@ -9,11 +9,11 @@ inputs:
     type: uri_folder
   freq:
     type: string
-  lag:
-    type: integer
+  lags:
+    type: string
 outputs:
   train_data:
-    type: uri_file
+    type: uri_folder
   test_data:
     type: uri_file
 
@@ -26,4 +26,4 @@ command: >-
   --train ${{outputs.train_data}}
   --test ${{outputs.test_data}}
   --freq ${{inputs.freq}}
-  --lag ${{inputs.lag}}
+  --lags ${{inputs.lags}}

@@ -6,7 +6,7 @@ type: command
 
 inputs:
   timeseries: 
-    type: uri_file 
+    type: uri_folder
   horizon:
     type: integer
   freq:
