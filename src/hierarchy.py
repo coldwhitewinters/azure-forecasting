@@ -1,6 +1,3 @@
-import os
-import json
-import argparse
 import logging
 
 import numpy as np
@@ -24,48 +21,87 @@ def get_hierarchy_groups(hierarchy_spec):
     return hierarchy_groups
 
 
-def build_group(bts_df, ids_df, group_key):
+def get_group_mappings(ids_df, group_key):
+    if len(group_key) == 0:
+        map_df = pl.DataFrame([[ids_df["unique_idx"]]]).rename({"column_0": "child_indexes"})
+        return map_df
+
+    map_df = (
+        ids_df
+        .group_by(group_key)
+        .agg("unique_idx")
+        .rename({"unique_idx": "child_indexes"})
+        .sort(by=group_key)
+    )
+
+    return map_df
+
+
+def get_group_aggregates(bts_df, ids_df, group_key):
     group_key = group_key + ("ds",)
     agg_df = (
         bts_df
         .join(ids_df, on="unique_id", how="left")
         .group_by(group_key)
-        .agg(
-            pl.col("y").sum(),
-        )
+        .agg(pl.col("y").sum())
         .sort(by=group_key)
     )
     return agg_df
 
 
-def build_group_indexes(ids_df, group_key):
-    index = np.arange(len(ids_df))
+def get_hierarchy_mappings(ids_df, hierarchy_spec):
+    hierarchy_groups = get_hierarchy_groups(hierarchy_spec)
 
-    if len(group_key) == 0:
-        group_indexes_df = (
-            pl.DataFrame([[pl.Series(index)]])
-            .rename({"column_0": "index"})
-        )
-        return group_indexes_df
+    id_cols = list(set(ids_df.columns).difference(["unique_id", "unique_idx"]))
 
-    group_indexes_df = (
-        ids_df.with_columns(
-            pl.Series(index).alias("index")
+    group_mappings_list = []
+    for _, group_key in hierarchy_groups.items():
+        group_mappings = get_group_mappings(ids_df, group_key)
+        group_mappings_list.append(group_mappings)
+
+    hts_mappings = (
+        pl.concat(group_mappings_list, how="diagonal")
+        .select(id_cols + ["child_indexes"])
+        .fill_null("<...>")
+        .with_columns(
+            pl.col("child_indexes").list.len().alias("n_childs"),
+            pl.concat_str(id_cols, separator="_").alias("unique_id")
         )
-        .group_by(group_key)
-        .agg(pl.col("index"))
-        .sort(by=group_key)
+        .sort(by=["n_childs", "unique_id"], descending=True)
     )
 
-    return group_indexes_df
+    return hts_mappings
 
 
-def build_S_arr(hts_indexes, sparse=True):
-    M = len(hts_indexes)
-    N = len(hts_indexes["index"][0])
+def get_hierarchy_aggregates(bts_df, ids_df, hierarchy_spec):
+    hierarchy_groups = get_hierarchy_groups(hierarchy_spec)
+
+    id_cols = list(set(ids_df.columns).difference(["unique_id", "unique_idx"]))
+
+    group_df_list = []
+    for _, group_key in hierarchy_groups.items():
+        group_df = get_group_aggregates(bts_df, ids_df, group_key)
+        group_df_list.append(group_df)
+
+    hts_df = (
+        pl.concat(group_df_list, how="diagonal")
+        .select(id_cols + ["ds", "y"])
+        .fill_null("<...>")
+        .with_columns(
+            pl.concat_str(id_cols, separator="_").alias("unique_id")
+        )
+        .sort(by=["unique_id", "ds"])
+    )
+
+    return hts_df
+
+
+def get_S_arr(hts_mappings, sparse=True):
+    M = len(hts_mappings)
+    N = len(hts_mappings["child_indexes"][0])
     S_arr = np.zeros((M, N))
 
-    index_rows = hts_indexes.select("index").iter_rows()
+    index_rows = hts_mappings.select("child_indexes").iter_rows()
     for i, row in enumerate(index_rows):
         indexes = row[0]
         S_arr[i, indexes] = 1
@@ -76,95 +112,25 @@ def build_S_arr(hts_indexes, sparse=True):
     return S_arr
 
 
-def build_hts(bts_df, ids_df, hierarchy_spec):
-    hierarchy_groups = get_hierarchy_groups(hierarchy_spec)
-
-    id_cols = ids_df.columns
-    id_cols.remove("unique_id")
-
-    group_indexes_list = []
-    for _, group_key in hierarchy_groups.items():
-        group_indexes = build_group_indexes(ids_df, group_key)
-        group_indexes_list.append(group_indexes)
-
-    hts_indexes = (
-        pl.concat(group_indexes_list, how="diagonal")
-        .select(id_cols + ["index"])
-        .fill_null("<...>")
-        .with_columns(
-            pl.col("index").list.len().alias("size"),
-            pl.concat_str(id_cols, separator="_").alias("unique_id")
-        )
-        .sort(by=["size", "unique_id"], descending=True)
-    )
-
-    S_arr = build_S_arr(hts_indexes)
-
-    group_df_list = []
-    for _, group_key in hierarchy_groups.items():
-        group_df = build_group(bts_df, ids_df, group_key)
-        group_df_list.append(group_df)
-
+def build_hierarchy(bts_df, ids_df, hierarchy_spec):
+    hts_df = get_hierarchy_aggregates(bts_df, ids_df, hierarchy_spec)
+    hts_mappings = get_hierarchy_mappings(ids_df, hierarchy_spec)
+    S_arr = get_S_arr(hts_mappings)
+    
     hts_df = (
-        pl.concat(group_df_list, how="diagonal")
-        .select(id_cols + ["ds", "y"])
-        .fill_null("<...>")
+        hts_df
+        .join(hts_mappings.select("unique_id", "n_childs"), on="unique_id", how="left")
+        .sort(by=["n_childs", "unique_id", "ds"], descending=True)
+        .drop("n_childs")
+        .select(["unique_id", "ds", "y"])
+    )
+
+    hts_ids = hts_mappings.drop("child_indexes", "n_childs").unique(maintain_order=True)
+    hts_ids = (
+        hts_ids
         .with_columns(
-            pl.concat_str(id_cols, separator="_").alias("unique_id")
+            pl.Series(np.arange(len(hts_ids))).alias("unique_idx")
         )
-        .join(hts_indexes.select("unique_id", "size"), on="unique_id", how="left")
-        .sort(by=["size", "unique_id", "ds"], descending=True)
-        .drop("size")
     )
 
-    return hts_df, S_arr
-
-
-def build_hierarchy(input_dir, output_dir):
-    logger.info("Loading preprocessed data")
-
-    data_df = pl.read_parquet(os.path.join(input_dir, "data.parquet"))
-    ids_df = pl.read_parquet(os.path.join(input_dir, "data_ids.parquet"))
-    with open(os.path.join(input_dir, "hierarchy_spec.json")) as fp:
-        hierarchy_spec = json.load(fp)
-
-    bts_df = (
-        data_df
-        .select("unique_id", "date", "dollar_sales")
-        .rename({"date": "ds", "dollar_sales": "y"})
-    )
-
-    logger.info("Building time series hierarchy")
-
-    hts_df, S_arr = build_hts(bts_df, ids_df, hierarchy_spec)
-
-    id_cols = ids_df.columns
-    hts_ids = hts_df.select(id_cols).unique(maintain_order=True)
-    hts_df = hts_df.select(["unique_id", "ds", "y"])
-
-    logger.info("Saving time series hierarchy")
-
-    hts_ids.write_parquet(os.path.join(output_dir, "hts_ids.parquet"))
-    hts_df.write_parquet(os.path.join(output_dir, "hts.parquet"))
-
-    if isinstance(S_arr, np.ndarray):
-        np.save(os.path.join(output_dir, "S_arr.npy"), S_arr)
-    elif isinstance(S_arr, sp_sparse.csr_array) or isinstance(S_arr, sp_sparse.csc_array):
-        sp_sparse.save_npz(os.path.join(output_dir, "S_arr.npz"), S_arr)
-    else:
-        raise ValueError("S_arr must be a numpy array or a sparse matrix")
-
-
-def main():
-    logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, help="Path to input data")
-    parser.add_argument("--output", type=str, help="Path to output data")
-    args = parser.parse_args()
-
-    build_hierarchy(args.input, args.output)
-
-
-if __name__ == "__main__":
-    main()
+    return hts_df, hts_ids, S_arr
