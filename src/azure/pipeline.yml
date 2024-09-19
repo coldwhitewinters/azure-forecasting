@@ -1,0 +1,79 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: Forecasting pipeline
+experiment_name: forecasting-pipeline
+description: Forecasting pipeline for the M5 data
+
+settings:
+  default_datastore: azureml:workspaceblobstore
+  default_compute: azureml:forecast-single-node
+  continue_on_step_failure: false
+
+jobs:
+  prepare_data_job:
+    type: command
+    component: ./prepare_data.yml
+    inputs:
+      raw_data: azureml:m5-data:1
+      # max_series: 1000
+    outputs:
+      data:
+      ids:
+      hierarchy_config:
+
+  target_and_reg_job:
+    type: command
+    component: ./prepare_target_and_reg.yml
+    inputs:
+      data: ${{parent.jobs.prepare_data_job.outputs.data}}
+      id_col: "unique_id"
+      date_col: "date"
+      target_col: "unit_sales"
+    outputs:
+      target:
+
+  build_hierarchy_job:
+    type: command
+    component: ./build_hierarchy.yml
+    inputs:
+      bts: ${{parent.jobs.target_and_reg_job.outputs.target}}
+      ids: ${{parent.jobs.prepare_data_job.outputs.ids}}
+      hierarchy_config: ${{parent.jobs.prepare_data_job.outputs.hierarchy_config}}
+    outputs:
+      hts: 
+      hts_ids:
+      smatrix:
+
+  train_test_split_job:
+    type: command
+    component: ./train_test_split.yml
+    inputs:
+      timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hts}}
+      freq: D
+      lags: 28 35
+    outputs:
+      train_data:
+      test_data:
+
+  # forecast_job:
+  #   type: command
+  #   component: ./forecast.yml
+  #   compute: forecast-cluster-2
+  #   inputs:
+  #     timeseries: ${{parent.jobs.train_test_split_job.outputs.train_data}}
+  #     horizon: 28
+  #     freq: D
+  #     season_length: 7
+  #     model: AutoETS
+  #     n_partitions: 256
+  #   outputs:
+  #     forecasts:
+
+  # evaluation_job:
+  #   type: command
+  #   component: ./evaluation.yml
+  #   inputs:
+  #     fcst: ${{parent.jobs.forecast_job.outputs.forecasts}}
+  #     test: ${{parent.jobs.train_test_split_job.outputs.test_data}}
+  #   outputs:
+  #     metrics:

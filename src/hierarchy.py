@@ -8,9 +8,9 @@ from itertools import product, chain
 logger = logging.getLogger(__name__)
 
 
-def get_hierarchy_groups(hierarchy_spec):
-    hierarchy_products = product(*hierarchy_spec)
-    hierarchy_chains = [tuple([elem]) for elem in chain(*hierarchy_spec)]
+def get_hierarchy_groups(hierarchy_config):
+    hierarchy_products = product(*hierarchy_config)
+    hierarchy_chains = [tuple([elem]) for elem in chain(*hierarchy_config)]
     hierarchy_total = [tuple()]
 
     hierarchy_groups = list(
@@ -49,8 +49,8 @@ def get_group_aggregates(bts_df, ids_df, group_key):
     return agg_df
 
 
-def get_hierarchy_mappings(ids_df, hierarchy_spec):
-    hierarchy_groups = get_hierarchy_groups(hierarchy_spec)
+def get_hierarchy_mappings(ids_df, hierarchy_config):
+    hierarchy_groups = get_hierarchy_groups(hierarchy_config)
 
     id_cols = list(set(ids_df.columns).difference(["unique_id", "unique_idx"]))
 
@@ -73,8 +73,8 @@ def get_hierarchy_mappings(ids_df, hierarchy_spec):
     return hts_mappings
 
 
-def get_hierarchy_aggregates(bts_df, ids_df, hierarchy_spec):
-    hierarchy_groups = get_hierarchy_groups(hierarchy_spec)
+def get_hierarchy_aggregates(bts_df, ids_df, hierarchy_config):
+    hierarchy_groups = get_hierarchy_groups(hierarchy_config)
 
     id_cols = list(set(ids_df.columns).difference(["unique_id", "unique_idx"]))
 
@@ -112,9 +112,9 @@ def get_S_arr(hts_mappings, sparse=True):
     return S_arr
 
 
-def build_hierarchy(bts_df, ids_df, hierarchy_spec):
-    hts_df = get_hierarchy_aggregates(bts_df, ids_df, hierarchy_spec)
-    hts_mappings = get_hierarchy_mappings(ids_df, hierarchy_spec)
+def build_hierarchy(bts_df, ids_df, hierarchy_config):
+    hts_df = get_hierarchy_aggregates(bts_df, ids_df, hierarchy_config)
+    hts_mappings = get_hierarchy_mappings(ids_df, hierarchy_config)
     S_arr = get_S_arr(hts_mappings)
     
     hts_df = (

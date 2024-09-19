@@ -1,0 +1,32 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: prepare_target_and_reg
+display_name: Prepare target and regressors
+version: 1
+type: command
+
+inputs:
+  data: 
+    type: uri_file  
+  id_col:
+    type: string
+    optional: true
+  date_col:
+    type: string
+    optional: true
+  target_col:
+    type: string
+    optional: true
+outputs:
+  target:
+    type: uri_file
+
+code: ../../
+environment: azureml:forecast-env@latest
+
+command: >-
+  python -m src.azure.prepare_target_and_reg
+  --input ${{inputs.data}}
+  --output-target ${{outputs.target}}
+  $[[--id-col ${{inputs.id_col}}]]
+  $[[--date-col ${{inputs.date_col}}]]
+  $[[--target-col ${{inputs.target_col}}]]

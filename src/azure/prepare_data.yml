@@ -11,14 +11,20 @@ inputs:
     type: integer
     optional: true
 outputs:
-  processed_data:
-    type: uri_folder
+  data:
+    type: uri_file
+  ids:
+    type: uri_file
+  hierarchy_config:
+    type: uri_file
 
-code: ../src
+code: ../../
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m preprocessing
+  python -m src.azure.prepare_data
   --input ${{inputs.raw_data}} 
-  --output ${{outputs.processed_data}}
+  --output-data ${{outputs.data}}
+  --output-ids ${{outputs.ids}}
+  --output-hierarchy-config ${{outputs.hierarchy_config}}
   $[[--max-series ${{inputs.max_series}}]]

@@ -1,0 +1,32 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: build_hierarchy
+display_name: Build hierarchy
+version: 1
+type: command
+
+inputs:
+  bts: 
+    type: uri_file
+  ids:
+    type: uri_file
+  hierarchy_config:
+    type: uri_file
+outputs:
+  hts:
+    type: uri_file
+  hts_ids:
+    type: uri_file
+  smatrix:
+    type: uri_folder
+
+code: ../../
+environment: "azureml:forecast-env@latest"
+
+command: >-
+  python -m src.azure.build_hierarchy
+  --input-bts ${{inputs.bts}}
+  --input-ids ${{inputs.ids}}
+  --input-hierarchy-config ${{inputs.hierarchy_config}}
+  --output-hts ${{outputs.hts}}
+  --output-ids ${{outputs.hts_ids}}
+  --output-smatrix ${{outputs.smatrix}}

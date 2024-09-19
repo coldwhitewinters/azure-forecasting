@@ -14,6 +14,11 @@ def prepare_data(input_dir, max_series=None):
     prices_df = pl.read_csv(os.path.join(input_dir, "sell_prices.csv"))
     calendar_df = pl.read_csv(os.path.join(input_dir, "calendar.csv"))
 
+    hierarchy_config = [
+        ["cat_id", "dept_id", "item_id"],
+        ["state_id", "store_id"]
+    ]
+
     logger.info("Processing data")
 
     ids_df = (
@@ -69,17 +74,12 @@ def prepare_data(input_dir, max_series=None):
         .sort(by=["unique_id", "date"])
     )
 
-    hierarchy_spec = [
-        ["cat_id", "dept_id", "item_id"],
-        ["state_id", "store_id"]
-    ]
-
-    logger.info("Finished data preparation")
-
     if max_series:
         logger.info(f"Keeping only {max_series} time series")
         selected_series = ids_df.select("unique_id").unique().slice(0, max_series)
         ids_df = ids_df.filter(pl.col("unique_id").is_in(selected_series))
         data_df = data_df.filter(pl.col("unique_id").is_in(selected_series))
 
-    return data_df, ids_df, hierarchy_spec
+    logger.info("Finished data preparation")
+
+    return data_df, ids_df, hierarchy_config

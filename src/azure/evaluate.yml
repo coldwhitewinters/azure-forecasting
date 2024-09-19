@@ -17,7 +17,7 @@ code: ../src
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m evaluation
+  python -m src.azure.evaluate
   --fcst ${{inputs.fcst}}
   --test ${{inputs.test}}
   --output ${{outputs.metrics}}

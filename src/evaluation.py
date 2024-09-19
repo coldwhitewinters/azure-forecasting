@@ -2,10 +2,45 @@ import os
 import argparse
 import logging
 from pathlib import Path
+
 import polars as pl
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 os.environ["NIXTLA_ID_AS_COL"] = "1"
+
+
+def get_rolling_cv_fold(ts_df, freq, lag):
+    if lag == 0:
+        train_df = ts_df
+        test_df = pl.DataFrame()
+        return train_df, test_df
+
+    start_date = ts_df["ds"].min()
+    end_date = ts_df["ds"].max()
+    dates = pd.date_range(start=start_date, end=end_date, freq=freq)
+    # dates = pl.date_range(start=start_date, end=end_date, interval=freq, eager=True)
+    cutoff = dates[:-lag].max()
+    train_df = ts_df.filter(ts_df["ds"] <= cutoff)
+    return train_df
+
+
+def prepare_eval_data(input_fp, train_dir, test_fp, freq, lags):
+    logger.info("Splitting data into train and test sets")
+
+    ts_df = pl.read_parquet(input_fp)
+
+    for lag in lags:
+        train_df = get_rolling_cv_fold(
+            ts_df=ts_df,
+            freq=freq,
+            lag=lag
+        )
+        logger.info(f"Saving CV fold for lag {lag}")
+        train_df.write_parquet(os.path.join(train_dir, f"lag_{lag}.parquet"))
+
+    logger.info("Saving test data")
+    ts_df.write_parquet(test_fp)
 
 
 def calculate_metrics(fcst_df, test_df, eps=0):
@@ -97,22 +132,3 @@ def evaluate_forecasts(fcst_dir, test_file, output_dir):
     #overall_metrics.write_csv(os.path.join(output_dir, "overall_metrics.csv"))
 
 
-def main():
-    logging.basicConfig(filename='../pipeline.log', level=logging.INFO)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--fcst", type=str, help="Path to forecast data")
-    parser.add_argument("--test", type=str, help="Path to test data")
-    # parser.add_argument("--train", type=str, help="Path to train data")
-    parser.add_argument("--output", type=str, help="Path to output data")
-    args = parser.parse_args()
-
-    evaluate_forecasts(
-        fcst_dir=args.fcst,
-        test_file=args.test,
-        output_dir=args.output
-    )
-
-
-if __name__ == "__main__":
-    main()
