@@ -1,11 +1,7 @@
-import logging
-
 import numpy as np
 import polars as pl
 import scipy.sparse as sp_sparse
 from itertools import product, chain
-
-logger = logging.getLogger(__name__)
 
 
 def get_hierarchy_groups(hierarchy_config):
@@ -116,7 +112,7 @@ def build_hierarchy(bts_df, ids_df, hierarchy_config):
     hts_df = get_hierarchy_aggregates(bts_df, ids_df, hierarchy_config)
     hts_mappings = get_hierarchy_mappings(ids_df, hierarchy_config)
     S_arr = get_S_arr(hts_mappings)
-    
+
     hts_df = (
         hts_df
         .join(hts_mappings.select("unique_id", "n_childs"), on="unique_id", how="left")

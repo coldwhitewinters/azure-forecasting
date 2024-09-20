@@ -1,14 +1,9 @@
 import os
-import logging
 import polars as pl
 import numpy as np
 
-logger = logging.getLogger(__name__)
-
 
 def prepare_data(input_dir, max_series=None):
-    logger.info("Loading data")
-
     sales_df = pl.read_csv(os.path.join(input_dir, "sales_train_evaluation.csv"))
     prices_df = pl.read_csv(os.path.join(input_dir, "sell_prices.csv"))
     calendar_df = pl.read_csv(os.path.join(input_dir, "calendar.csv"))
@@ -17,8 +12,6 @@ def prepare_data(input_dir, max_series=None):
         ["cat_id", "dept_id", "item_id"],
         ["state_id", "store_id"]
     ]
-
-    logger.info("Processing data")
 
     ids_df = (
         sales_df
@@ -74,11 +67,8 @@ def prepare_data(input_dir, max_series=None):
     )
 
     if max_series:
-        logger.info(f"Keeping only {max_series} time series")
         selected_series = ids_df.select("unique_id").unique().slice(0, max_series)
         ids_df = ids_df.filter(pl.col("unique_id").is_in(selected_series))
         data_df = data_df.filter(pl.col("unique_id").is_in(selected_series))
-
-    logger.info("Finished data preparation")
 
     return data_df, ids_df, hierarchy_config

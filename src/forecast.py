@@ -24,8 +24,8 @@ def statsforecaster(df, horizon, freq, model):
 
 
 def forecast(
-    ts_df,
     ts_dd,
+    output_schema,
     horizon=1,
     freq="M",
     season_length=1,
@@ -52,7 +52,10 @@ def forecast(
         .compute()
     )
     fcst_df = fcst_df.reset_index(drop=True)
-    fcst_df = pl.DataFrame(fcst_df).with_columns(pl.col("ds").cast(ts_df["ds"].dtype))
-    fcst_df = fcst_df.with_columns(cutoff=fcst_df["ds"].min())
+    fcst_df = (
+        pl.DataFrame(fcst_df)
+        .cast(dtypes=output_schema)
+        .with_columns(cutoff=fcst_df["ds"].min())
+    )
 
     return fcst_df

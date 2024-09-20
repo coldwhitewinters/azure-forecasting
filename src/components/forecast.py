@@ -12,7 +12,7 @@ from src.forecast import forecast
 logger = logging.getLogger(__name__)
 
 
-def main():
+def forecast_component():
     logging.basicConfig(filename='pipeline.log', level=logging.INFO)
 
     dask_mpi.initialize()
@@ -35,12 +35,12 @@ def main():
     logger.info("Starting forecast")
 
     for ts_fp in input_dir.iterdir():
-        ts_df = pl.read_parquet(ts_fp)
-        ts_dd = dd.read_parquet(ts_fp)
+        ts_dd = dd.read_parquet(ts_fp, split_row_groups=True)
+        output_schema = pl.read_parquet(ts_fp).schema
 
         fcst_df = forecast(
-            ts_df=ts_df,
             ts_dd=ts_dd,
+            output_schema=output_schema,
             horizon=args.horizon,
             freq=args.freq,
             season_length=args.season_length,
@@ -57,4 +57,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    forecast_component()

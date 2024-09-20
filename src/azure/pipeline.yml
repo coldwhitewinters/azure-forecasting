@@ -69,11 +69,11 @@ jobs:
     outputs:
       forecasts:
 
-  # evaluation_job:
-  #   type: command
-  #   component: ./evaluation.yml
-  #   inputs:
-  #     fcst: ${{parent.jobs.forecast_job.outputs.forecasts}}
-  #     test: ${{parent.jobs.train_test_split_job.outputs.test_data}}
-  #   outputs:
-  #     metrics:
+  evaluation_job:
+    type: command
+    component: ./evaluate.yml
+    inputs:
+      fcst: ${{parent.jobs.forecast_job.outputs.forecasts}}
+      test: ${{parent.jobs.rolling_cv_folds_job.outputs.test_data}}
+    outputs:
+      metrics:

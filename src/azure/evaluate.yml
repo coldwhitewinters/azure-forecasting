@@ -18,6 +18,6 @@ environment: azureml:forecast-env@latest
 
 command: >-
   python -m src.components.evaluate
-  --fcst ${{inputs.fcst}}
-  --test ${{inputs.test}}
-  --output ${{outputs.metrics}}
+  --input-fcst ${{inputs.fcst}}
+  --input-test ${{inputs.test}}
+  --output-metrics ${{outputs.metrics}}

@@ -25,6 +25,8 @@ def prepare_data_component():
         max_series=args.max_series
     )
 
+    logger.info("Finished data preparation")
+
     logger.info("Saving processed data")
 
     data_df.write_parquet(args.output_data)
