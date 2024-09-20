@@ -52,10 +52,7 @@ def forecast(
         .compute()
     )
     fcst_df = fcst_df.reset_index(drop=True)
-    fcst_df = (
-        pl.DataFrame(fcst_df)
-        .cast(dtypes=output_schema)
-        .with_columns(cutoff=fcst_df["ds"].min())
-    )
+    fcst_df = pl.DataFrame(fcst_df).cast(dtypes=output_schema)
+    fcst_df = fcst_df.with_columns(cutoff=fcst_df["ds"].min())
 
     return fcst_df

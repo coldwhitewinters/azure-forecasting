@@ -28,15 +28,16 @@ def forecast_component():
     parser.add_argument("--n-partitions", type=int)
     args = parser.parse_args()
 
-    logger.info("Loading timeseries")
+    logger.info("Starting forecast")
 
     input_dir = Path(args.input)
 
-    logger.info("Starting forecast")
-
     for ts_fp in input_dir.iterdir():
+
+        logger.info("Loading timeseries")
+
         ts_dd = dd.read_parquet(ts_fp, split_row_groups=True)
-        output_schema = pl.read_parquet(ts_fp).schema
+        output_schema = pl.read_parquet(ts_fp).rename({"y": "y_hat"}).schema
 
         fcst_df = forecast(
             ts_dd=ts_dd,
