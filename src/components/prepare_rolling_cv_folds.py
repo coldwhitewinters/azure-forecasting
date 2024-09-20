@@ -1,12 +1,14 @@
+import os
 import logging
 import argparse
 
-from src.evaluation import prepare_eval_data
+import polars as pl
+from src.evaluation import prepare_rolling_cv_folds
 
 logger = logging.getLogger(__name__)
 
 
-def main():
+def prepare_rolling_cv_folds_component():
     logging.basicConfig(filename='pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -20,14 +22,25 @@ def main():
     )
     args = parser.parse_args()
 
-    prepare_eval_data(
-        input_fp=args.input,
-        train_dir=args.output_train,
-        test_fp=args.output_test,
+    logger.info("Preparing rolling CV folds")
+
+    ts_df = pl.read_parquet(args.input)
+
+    cv_folds = prepare_rolling_cv_folds(
+        ts_df=ts_df,
         freq=args.freq,
         lags=map(int, args.lags)
     )
 
+    logger.info("Saving rolling CV folds")
+
+    for lag, train_df in cv_folds:
+        train_df.write_parquet(os.path.join(args.output_train, f"lag_{lag}.parquet"))
+
+    logger.info("Saving test data")
+
+    ts_df.write_parquet(args.output_test)
+
 
 if __name__ == "__main__":
-    main()
+    prepare_rolling_cv_folds_component()

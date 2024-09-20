@@ -1,6 +1,3 @@
-import polars as pl
-
-
 def get_target_df(df, target_col, id_col="unique_id", date_col="ds"):
     target_df = (
         df

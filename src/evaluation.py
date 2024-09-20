@@ -1,5 +1,4 @@
 import os
-import argparse
 import logging
 from pathlib import Path
 
@@ -25,22 +24,12 @@ def get_rolling_cv_fold(ts_df, freq, lag):
     return train_df
 
 
-def prepare_eval_data(input_fp, train_dir, test_fp, freq, lags):
+def prepare_rolling_cv_folds(ts_df, freq, lags):
     logger.info("Splitting data into train and test sets")
 
-    ts_df = pl.read_parquet(input_fp)
-
-    for lag in lags:
-        train_df = get_rolling_cv_fold(
-            ts_df=ts_df,
-            freq=freq,
-            lag=lag
-        )
-        logger.info(f"Saving CV fold for lag {lag}")
-        train_df.write_parquet(os.path.join(train_dir, f"lag_{lag}.parquet"))
-
-    logger.info("Saving test data")
-    ts_df.write_parquet(test_fp)
+    ts_df = pl.read_parquet(ts_df)
+    cv_folds = ((lag, get_rolling_cv_fold(ts_df, freq, lag)) for lag in lags)
+    return cv_folds
 
 
 def calculate_metrics(fcst_df, test_df, eps=0):

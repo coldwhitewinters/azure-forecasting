@@ -24,7 +24,7 @@ code: ../../
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m src.azure.prepare_target_and_reg
+  python -m src.components.prepare_target_and_reg
   --input ${{inputs.data}}
   --output-target ${{outputs.target}}
   $[[--id-col ${{inputs.id_col}}]]

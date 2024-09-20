@@ -1,18 +1,13 @@
-import sys
 import argparse
 import logging
-from pathlib import Path
+
 import polars as pl
-
-#ROOT_DIR = Path(__file__).absolute().parent.parent.parent
-#sys.path.insert(0, str(ROOT_DIR))
-
 from src.preprocessing.utils import get_target_df
 
 logger = logging.getLogger(__name__)
 
 
-def main():
+def prepare_target_and_regressors_component():
     logging.basicConfig(filename='pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -40,4 +35,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    prepare_target_and_regressors_component()

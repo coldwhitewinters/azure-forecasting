@@ -22,7 +22,7 @@ code: ../../
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m src.azure.prepare_data
+  python -m src.components.prepare_data
   --input ${{inputs.raw_data}} 
   --output-data ${{outputs.data}}
   --output-ids ${{outputs.ids}}

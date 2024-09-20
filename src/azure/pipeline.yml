@@ -44,9 +44,9 @@ jobs:
       hts_ids:
       smatrix:
 
-  train_test_split_job:
+  rolling_cv_folds_job:
     type: command
-    component: ./train_test_split.yml
+    component: ./prepare_rolling_cv_folds.yml
     inputs:
       timeseries: ${{parent.jobs.build_hierarchy_job.outputs.hts}}
       freq: D
@@ -55,19 +55,19 @@ jobs:
       train_data:
       test_data:
 
-  # forecast_job:
-  #   type: command
-  #   component: ./forecast.yml
-  #   compute: forecast-cluster-2
-  #   inputs:
-  #     timeseries: ${{parent.jobs.train_test_split_job.outputs.train_data}}
-  #     horizon: 28
-  #     freq: D
-  #     season_length: 7
-  #     model: AutoETS
-  #     n_partitions: 256
-  #   outputs:
-  #     forecasts:
+  forecast_job:
+    type: command
+    component: ./forecast.yml
+    compute: forecast-cluster-2
+    inputs:
+      timeseries: ${{parent.jobs.rolling_cv_folds_job.outputs.train_data}}
+      horizon: 28
+      freq: D
+      season_length: 7
+      model: AutoETS
+      n_partitions: 256
+    outputs:
+      forecasts:
 
   # evaluation_job:
   #   type: command

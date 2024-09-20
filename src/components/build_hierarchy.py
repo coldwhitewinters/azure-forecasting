@@ -12,7 +12,7 @@ from src.hierarchy import build_hierarchy
 logger = logging.getLogger(__name__)
 
 
-def main():
+def build_hierarchy_component():
     logging.basicConfig(filename="pipeline.log", level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -48,4 +48,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    build_hierarchy_component()

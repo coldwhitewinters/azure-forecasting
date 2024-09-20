@@ -1,6 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
-name: train_test_split
-display_name: Train test split
+name: prepare_rolling_cv_folds
+display_name: Prepare rolling cross-validation folds
 version: 1
 type: command
 
@@ -21,7 +21,7 @@ code: ../../
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m src.azure.train_test_split
+  python -m src.components.prepare_rolling_cv_folds
   --input ${{inputs.timeseries}}
   --output-train ${{outputs.train_data}}
   --output-test ${{outputs.test_data}}

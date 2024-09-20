@@ -1,18 +1,13 @@
-#import sys
 import json
 import argparse
 import logging
-#from pathlib import Path
-
-#ROOT_DIR = Path(__file__).absolute().parent.parent.parent
-#sys.path.insert(0, str(ROOT_DIR))
 
 from src.preprocessing.m5 import prepare_data
 
 logger = logging.getLogger(__name__)
 
 
-def main():
+def prepare_data_component():
     logging.basicConfig(filename='pipeline.log', level=logging.INFO)
 
     parser = argparse.ArgumentParser()
@@ -39,4 +34,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    prepare_data_component()

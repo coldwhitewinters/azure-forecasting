@@ -23,7 +23,7 @@ code: ../../
 environment: "azureml:forecast-env@latest"
 
 command: >-
-  python -m src.azure.build_hierarchy
+  python -m src.components.build_hierarchy
   --input-bts ${{inputs.bts}}
   --input-ids ${{inputs.ids}}
   --input-hierarchy-config ${{inputs.hierarchy_config}}

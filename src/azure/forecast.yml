@@ -27,13 +27,13 @@ distribution:
 resources:
   instance_count: 7
 
-code: ../src
+code: ../../
 environment: azureml:forecast-env@latest
 
 command: >-
-  python -m forecast
+  python -m src.components.forecast
   --input ${{inputs.timeseries}} 
-  --output ${{outputs.forecasts}}
+  --output-fcst ${{outputs.forecasts}}
   --horizon ${{inputs.horizon}} 
   --freq ${{inputs.freq}}
   --season-length ${{inputs.season_length}}
